@@ -2,7 +2,7 @@ use std::env;
 use std::fs;
 use std::fmt;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 enum Shape {
     Rock,
     Paper,
@@ -65,10 +65,63 @@ fn parse_round(line: &str) -> (Shape, Shape) {
     (opponent, me)
 }
 
-fn apply_strategy(contents: String) -> i32 {
+fn loser(opponent: &Shape) -> Shape {
+    match *opponent {
+        Shape::Rock => Shape::Scissors,
+        Shape::Paper => Shape::Rock,
+        Shape::Scissors => Shape::Paper,
+    }
+}
+
+fn winner(opponent: &Shape) -> Shape {
+    match *opponent {
+        Shape::Rock => Shape::Paper,
+        Shape::Paper => Shape::Scissors,
+        Shape::Scissors => Shape::Rock,
+    }
+}
+
+
+fn parse_round_part2(line: &str) -> (Shape, Shape) {
+    let opponent = match line.as_bytes()[0] {
+        b'A' => Shape::Rock,
+        b'B' => Shape::Paper,
+        b'C' => Shape::Scissors,
+        _ => Shape::Rock,
+    };
+    let me = match line.as_bytes()[2] {
+        b'X' => loser(&opponent),
+        b'Y' => opponent, // draw
+        b'Z' => winner(&opponent),
+        _ => Shape::Rock,
+    };
+    (opponent, me)
+}
+
+fn apply_strategy(contents: &String) -> i32 {
     let mut total = 0;
-    for line in contents.lines() {
+    for line in (*contents).lines() {
         let round = parse_round(line);
+        let score = win(&round.0, &round.1);
+        total += match round.1 {
+            Shape::Rock => 1,
+            Shape::Paper => 2,
+            Shape::Scissors => 3,
+        };
+        total += match score {
+            -1 => 0,
+            0 => 3,
+            1 => 6,
+            _ => 0,
+        };
+    }
+    total
+}
+
+fn apply_strategy_part2(contents: &String) -> i32 {
+    let mut total = 0;
+    for line in (*contents).lines() {
+        let round = parse_round_part2(line);
         let score = win(&round.0, &round.1);
         total += match round.1 {
             Shape::Rock => 1,
@@ -90,6 +143,8 @@ fn main() {
     let file_path = &args[1];
     println!("Input file: {file_path}");
     let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
-    let score =  apply_strategy(contents);
-    println!("Score: {}", score);
+    let mut score =  apply_strategy(&contents);
+    println!("Score part 1: {}", score);
+    score = apply_strategy_part2(&contents);
+    println!("Score part 2: {}", score);
 }
