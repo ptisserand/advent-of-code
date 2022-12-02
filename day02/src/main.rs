@@ -49,7 +49,7 @@ fn win(opponent: &Shape, me: &Shape) -> i32 {
     return winner;
 }
 
-fn parse_round(line: &str) -> (Shape, Shape) {
+fn strategy_part1(line: &str) -> (Shape, Shape) {
     let opponent = match line.as_bytes()[0] {
         b'A' => Shape::Rock,
         b'B' => Shape::Paper,
@@ -82,7 +82,7 @@ fn winner(opponent: &Shape) -> Shape {
 }
 
 
-fn parse_round_part2(line: &str) -> (Shape, Shape) {
+fn strategy_part2(line: &str) -> (Shape, Shape) {
     let opponent = match line.as_bytes()[0] {
         b'A' => Shape::Rock,
         b'B' => Shape::Paper,
@@ -98,10 +98,10 @@ fn parse_round_part2(line: &str) -> (Shape, Shape) {
     (opponent, me)
 }
 
-fn apply_strategy(contents: &String) -> i32 {
+fn apply_strategy(contents: &String, strategy: fn(&str) -> (Shape, Shape)) -> i32 {
     let mut total = 0;
     for line in (*contents).lines() {
-        let round = parse_round(line);
+        let round = strategy(line);
         let score = win(&round.0, &round.1);
         total += match round.1 {
             Shape::Rock => 1,
@@ -118,33 +118,14 @@ fn apply_strategy(contents: &String) -> i32 {
     total
 }
 
-fn apply_strategy_part2(contents: &String) -> i32 {
-    let mut total = 0;
-    for line in (*contents).lines() {
-        let round = parse_round_part2(line);
-        let score = win(&round.0, &round.1);
-        total += match round.1 {
-            Shape::Rock => 1,
-            Shape::Paper => 2,
-            Shape::Scissors => 3,
-        };
-        total += match score {
-            -1 => 0,
-            0 => 3,
-            1 => 6,
-            _ => 0,
-        };
-    }
-    total
-}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
     let file_path = &args[1];
     println!("Input file: {file_path}");
     let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
-    let mut score =  apply_strategy(&contents);
+    let mut score =  apply_strategy(&contents, strategy_part1);
     println!("Score part 1: {}", score);
-    score = apply_strategy_part2(&contents);
+    score = apply_strategy(&contents, strategy_part2);
     println!("Score part 2: {}", score);
 }
