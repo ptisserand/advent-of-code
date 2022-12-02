@@ -27,6 +27,11 @@ fn get_max_calories(elves: &Vec<i32>) -> i32 {
     value
 }
 
+fn get_total_calories(mut elves: Vec<i32>) -> i32 {
+    elves.sort_unstable_by(|a, b| b.cmp(a));
+    elves[0] + elves[1] + elves[2]
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let file_path = &args[1];
@@ -34,6 +39,7 @@ fn main() {
     let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
     let elves = parse_contents(contents);
     println!("Number of elves: {}", elves.len());
-    println!("Max calories: {}", get_max_calories(&elves));
+    println!("Part1: Max calories: {}", get_max_calories(&elves));
+    println!("Part2: Total max calories: {}", get_total_calories(elves));
 
 }
