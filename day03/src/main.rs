@@ -32,6 +32,34 @@ fn check_backpack(line: &str) -> u32 {
     total
 }
 
+fn find_common(group: &Vec<String>) -> char {
+    let first = &group[0];
+    let second = &group[1];
+    let third = &group[2];
+    for c in first.chars() {
+        if second.contains(c) && third.contains(c) {
+            return c;
+        }
+    }
+    return 'a';
+}
+fn check_group(contents: String) -> u32 {
+    let mut total: u32 = 0;
+    let mut idx = 0;
+    let mut groups: Vec<String> = Vec::new();
+    for line in contents.lines() {
+        groups.push(line.to_owned());
+        idx += 1;
+        if idx == 3 {
+            idx = 0;
+            let common = find_common(&groups);
+            groups.clear();
+            total += get_priority(common);
+        }
+    }
+    total
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let file_path = &args[1];
@@ -41,5 +69,7 @@ fn main() {
     for line in contents.lines() {
         total += check_backpack(line);
     }
-    println!("Total: {}", total);
+    println!("Part1 Total: {}", total);
+    total = check_group(contents);
+    println!("Part2 Total: {}", total);
 }
