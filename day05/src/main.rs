@@ -2,7 +2,7 @@ use std::{env, fs};
 
 use regex::Regex;
 
-fn apply_procedures(stacks: &mut Vec<Vec<u8>>, procedures: Vec<String>) {
+fn apply_procedures_part1(stacks: &mut Vec<Vec<u8>>, procedures: &Vec<String>) {
     let re: regex::Regex =
         Regex::new(r"move (?P<nb>\d+) from (?P<source>\d+) to (?P<target>\d+)").unwrap();
     for procedure in procedures {
@@ -13,6 +13,27 @@ fn apply_procedures(stacks: &mut Vec<Vec<u8>>, procedures: Vec<String>) {
         let target: usize = motion["target"].parse::<usize>().unwrap() - 1;
         for _ in 0..nb {
             let elem = stacks[source].pop().unwrap();
+            stacks[target].push(elem);
+        }
+    }
+}
+
+fn apply_procedures_part2(stacks: &mut Vec<Vec<u8>>, procedures: &Vec<String>) {
+    let re: regex::Regex =
+        Regex::new(r"move (?P<nb>\d+) from (?P<source>\d+) to (?P<target>\d+)").unwrap();
+    for procedure in procedures {
+        // println!("{}", procedure);
+        let motion = re.captures(&procedure).unwrap();
+        let nb: usize = motion["nb"].parse().unwrap();
+        let source: usize = motion["source"].parse::<usize>().unwrap() - 1;
+        let target: usize = motion["target"].parse::<usize>().unwrap() - 1;
+        let mut tmp_vec: Vec<u8> = Vec::new();
+        for _ in 0..nb {
+            let elem = stacks[source].pop().unwrap();
+            tmp_vec.push(elem);
+        }
+        for _ in 0..nb {
+            let elem: u8 = tmp_vec.pop().unwrap();
             stacks[target].push(elem);
         }
     }
@@ -80,8 +101,13 @@ fn main() {
 
     let mut stacks: Vec<Vec<u8>> = init_stacks(&drawings, nb_stacks);
 
-    apply_procedures(&mut stacks, procedures);
+    apply_procedures_part1(&mut stacks, &procedures);
     let part1_result = get_result(&mut stacks);
     println!("Part 1: {}", part1_result);
+    stacks.clear();
+    stacks = init_stacks(&drawings, nb_stacks);
+    apply_procedures_part2(&mut stacks, &procedures);
+    let part2_result = get_result(&mut stacks);
+    println!("Part 2: {}", part2_result);
 
 }
