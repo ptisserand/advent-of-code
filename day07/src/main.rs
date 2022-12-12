@@ -107,4 +107,20 @@ fn main() {
         }
     }
     println!("Part 1: {}", part1_size);
+    
+    let total_size: u32 = 70000000;
+    let wanted_free_size: u32 = 30000000;
+    let used_size: u32 = directories.get(&String::from("//")).unwrap().size(&directories);
+    let free_size = total_size - used_size;
+    let to_free = wanted_free_size - free_size;
+    println!("Free size: {} -> {}", free_size, to_free);
+    let mut check_size = total_size;
+    for (_key, value) in directories.clone() {
+        let dir_size = value.size(&directories);
+        if (dir_size >= to_free) && (dir_size < check_size) {
+            check_size = dir_size;
+        }
+    }
+    println!("Part 2: {}", check_size);
+
 }
