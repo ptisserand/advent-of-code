@@ -3,12 +3,14 @@ fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
     for group in include_str!("../input_test.txt").split("\n\n") {
-        println!("In group:");
+        let mut sum = 0;
         for line in group.lines() {
-            println!("Got line: {}", line);
+            let value = line.parse::<u64>()?;
+            sum += value;
         }
+        println!("Group has sum {sum}");
     }
-    
+
     // return a result
     Ok(())
 }
