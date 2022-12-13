@@ -1,11 +1,13 @@
 use color_eyre::eyre::Context;
 
-
-fn main() {
+fn main() -> color_eyre::Result<()>{
   // add color-eyre handler
-  color_eyre::install().unwrap();
-  let input = read_input().unwrap();
+  color_eyre::install()?;
+  let input = read_input()?;
   println!("{input}");
+
+  // return a result
+  Ok(())
 }
 
 fn read_input() -> color_eyre::Result<String> {
