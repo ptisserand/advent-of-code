@@ -5,14 +5,8 @@ fn main() -> color_eyre::Result<()>{
 
   let input = include_str!("../input_test.txt");
   let mut lines = input.lines();
-  loop {
-    let maybe_line = lines.next();
-    match maybe_line {
-      Some(line) => {
-        println!("Got line: {}", line);
-      }
-      None => break,
-    }
+  while let Some(line) = lines.next() {
+    println!("Got line: {}", line);
   }
   // return a result
   Ok(())
