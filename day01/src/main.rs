@@ -4,7 +4,8 @@ fn main() {
   println!("{input}");
 }
 
-fn read_input() -> Result<String, std::io::Error> {
+fn read_input() -> color_eyre::Result<String> {
   let path = "input2.txt";
-  fs_err::read_to_string(path)
+  let input = std::fs::read_to_string(path)?;
+  Ok(input)
 }
