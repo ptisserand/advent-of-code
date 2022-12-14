@@ -5,9 +5,8 @@ fn main() -> color_eyre::Result<()> {
     let lines = include_str!("../input_test.txt")
         .lines()
         .collect::<Vec<_>>();
-    let groups = lines.split(|line| line.is_empty()).collect::<Vec<_>>();
-    let groups = groups
-        .into_iter()
+    let groups = lines
+        .split(|line| line.is_empty())
         .map(|group| {
             group
                 .iter()
