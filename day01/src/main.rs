@@ -14,7 +14,7 @@ fn main() -> color_eyre::Result<()> {
             (Some(a), None) => Err((Some(a), None)),
         })
         .flatten()
-        .sorted_by_key(|v| u64::MAX - v)
+        .sorted_by_key(|&v| std::cmp::Reverse(v))
         .take(3)
         .sum::<u64>();
         println!("Part2: {max:?}");
