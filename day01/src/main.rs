@@ -13,10 +13,11 @@ fn main() -> color_eyre::Result<()> {
             (Some(a), Some(b)) => Ok(Some(a + b)),
             (Some(a), None) => Err((Some(a), None)),
         })
-        .max()
         .flatten()
-        .unwrap_or_default();
-        println!("Part1: {max:?}");
+        .sorted_by_key(|v| u64::MAX - v)
+        .take(3)
+        .sum::<u64>();
+        println!("Part2: {max:?}");
     // return a result
     Ok(())
 }
