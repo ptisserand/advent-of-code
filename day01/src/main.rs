@@ -9,7 +9,7 @@ fn main() -> color_eyre::Result<()> {
     let groups = lines
         .split(|line| line.is_none())
         .map(|group| group.iter().map(|v| v.unwrap()).sum::<u64>())
-        .collect::<Vec<_>>();
+        .max();
     println!("Groups: {groups:?}");
     // return a result
     Ok(())
