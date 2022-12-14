@@ -1,4 +1,6 @@
-use itertools::Itertools;
+use std::cmp::Reverse;
+
+use itertools::{Itertools, FoldWhile};
 
 fn main() -> color_eyre::Result<()> {
     // add color-eyre handler
@@ -7,15 +9,18 @@ fn main() -> color_eyre::Result<()> {
     let max = include_str!("../input.txt")
         .lines()
         .map(|v| v.parse::<u64>().ok())
-        .coalesce(|a, b| match(a, b) {
-            (None, None) => Ok(None),
-            (None, Some(b)) => Ok(Some(b)),
-            (Some(a), Some(b)) => Ok(Some(a + b)),
-            (Some(a), None) => Err((Some(a), None)),
+        // consider all lines separated by 'None'
+        .batching(|it| {
+            it.fold_while(None, |acc: Option<u64>, v| match v {
+                Some(v) => FoldWhile::Continue(Some(acc.unwrap_or_default() + v)),
+                // group separator , it's done
+                None => FoldWhile::Done(acc),
+            })
+            .into_inner()
         })
-        .flatten()
-        .sorted_by_key(|&v| std::cmp::Reverse(v))
-        .take(3)
+        .map(Reverse)
+        .k_smallest(3)
+        .map(|x| x.0)
         .sum::<u64>();
         println!("Part2: {max:?}");
     // return a result
