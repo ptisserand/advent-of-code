@@ -62,17 +62,22 @@ impl Move {
         }
     }
 
+    fn beats(self, other: Move) -> bool {
+        matches!(
+            (self, other),
+            (Self::Rock, Self::Scissors) 
+                | (Self::Paper, Self::Rock) 
+                | (Self::Scissors, Self::Paper)
+        )
+    }
+
     fn outcome(self, theirs: Move) -> OutCome {
-        match (self, theirs) {
-            (Move::Rock, Move::Rock) => OutCome::Draw,
-            (Move::Rock, Move::Paper) => OutCome::Loss,
-            (Move::Rock, Move::Scissors) => OutCome::Win,
-            (Move::Paper, Move::Rock) => OutCome::Win,
-            (Move::Paper, Move::Paper) => OutCome::Draw,
-            (Move::Paper, Move::Scissors) => OutCome::Loss,
-            (Move::Scissors, Move::Rock) => OutCome::Loss,
-            (Move::Scissors, Move::Paper) => OutCome::Win,
-            (Move::Scissors, Move::Scissors) => OutCome::Draw,
+        if self.beats(theirs) {
+            OutCome::Win
+        } else if theirs.beats(self) {
+            OutCome::Loss
+        } else {
+            OutCome::Draw
         }
     }
 }
