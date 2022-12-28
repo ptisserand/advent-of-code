@@ -1,5 +1,4 @@
 use std::env;
-use std::fmt;
 use std::fs;
 use std::str::FromStr;
 
@@ -65,8 +64,8 @@ impl Move {
     fn beats(self, other: Move) -> bool {
         matches!(
             (self, other),
-            (Self::Rock, Self::Scissors) 
-                | (Self::Paper, Self::Rock) 
+            (Self::Rock, Self::Scissors)
+                | (Self::Paper, Self::Rock)
                 | (Self::Scissors, Self::Paper)
         )
     }
@@ -81,6 +80,26 @@ impl Move {
         }
     }
 }
+
+impl OutCome {
+    fn inherent_points(self) -> usize {
+        match self {
+            OutCome::Win => 6,
+            OutCome::Draw => 3,
+            OutCome::Loss => 0,
+        }
+    }
+}
+
+impl Round {
+    fn outcome(self) -> OutCome {
+        self.ours.outcome(self.theirs)
+    }
+    fn score(self) -> usize {
+        self.ours.inherent_points() + self.outcome().inherent_points()
+    }
+}
+
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
@@ -90,8 +109,12 @@ fn main() -> color_eyre::Result<()> {
     let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
     for round in contents.lines().map(|line| line.parse::<Round>()) {
         let round = round?;
-        println!("{round:?}");
-    };
+        println!(
+            "{round:?}: outcome={outcome:?}, our score={our_score}",
+            outcome = round.outcome(),
+            our_score = round.score()
+        );
+    }
 
     Ok(())
 }
