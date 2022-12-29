@@ -1,6 +1,7 @@
 use std::env;
 use std::fs;
 use std::str::FromStr;
+use itertools::{process_results, Itertools};
 
 #[derive(Debug, Clone, Copy)]
 enum Move {
@@ -106,13 +107,14 @@ fn main() -> color_eyre::Result<()> {
     let args: Vec<String> = env::args().collect();
     let file_path = &args[1];
     println!("Input file: {file_path}");
-    let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
-    let rounds: Vec<Round> = contents
-        .lines()
-        .map(|line| line.parse())
-        .collect::<Result<_, _>>()?;
-
-    let total_score: usize = rounds.iter().map(|r| r.score()).sum();
-    println!("Total score: {total_score}");
+    let total_score = itertools::process_results(
+        fs::read_to_string(file_path)
+            .expect("Should have been able to read the file")
+            .lines()
+            .map(Round::from_str)
+            .map_ok(|r| r.score()),
+        |it| it.sum::<usize>(),
+    );
+    println!("Total score: {total_score:?}");
     Ok(())
 }
