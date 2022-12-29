@@ -107,14 +107,12 @@ fn main() -> color_eyre::Result<()> {
     let file_path = &args[1];
     println!("Input file: {file_path}");
     let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
-    for round in contents.lines().map(|line| line.parse::<Round>()) {
-        let round = round?;
-        println!(
-            "{round:?}: outcome={outcome:?}, our score={our_score}",
-            outcome = round.outcome(),
-            our_score = round.score()
-        );
-    }
+    let rounds: Vec<Round> = contents
+        .lines()
+        .map(|line| line.parse())
+        .collect::<Result<_, _>>()?;
 
+    let total_score: usize = rounds.iter().map(|r| r.score()).sum();
+    println!("Total score: {total_score}");
     Ok(())
 }
