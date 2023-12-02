@@ -59,3 +59,27 @@ fn main() -> color_eyre::Result<()> {
     println!("Calibration part2: {}", calibration2);
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calibration_part1() {
+        assert_eq!(12, calibration_part1("1abc2"));
+        assert_eq!(38, calibration_part1("pqr3stu8vwx"));
+        assert_eq!(15, calibration_part1("a1b2c3d4e5f"));
+        assert_eq!(77, calibration_part1("treb7uchet"));
+    }
+
+    #[test]
+    fn test_calibration_part2() {
+        assert_eq!(29, calibration_part2("two1nine"));
+        assert_eq!(83, calibration_part2("eightwothree"));
+        assert_eq!(13, calibration_part2("abcone2threexyz"));
+        assert_eq!(24, calibration_part2("xtwone3four"));
+        assert_eq!(42, calibration_part2("4nineeightseven2"));
+        assert_eq!(14, calibration_part2("zoneight234"));
+        assert_eq!(76, calibration_part2("7pqrstsixteen"));
+    }
+}
