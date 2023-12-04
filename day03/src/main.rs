@@ -138,7 +138,7 @@ fn main() -> color_eyre::Result<()> {
     let value_part1 = part1(&contents);
     println!("Engine part1: {}", value_part1);
     let value_part2 = part2(&contents);
-    println!("Engine part1: {}", value_part2);
+    println!("Engine part2: {}", value_part2);
     Ok(())
 }
 
