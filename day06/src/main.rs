@@ -23,7 +23,7 @@ impl Race {
     }
 
     fn limits(&self) -> (Option<usize>, Option<usize>) {
-        let det = (self.time * self.time) as i32 - 4 * self.best_distance as i32;
+        let det = (self.time as i64 * self.time as i64) - 4 * self.best_distance as i64;
         if det < 0 {
             return (None, None);
         }
@@ -56,6 +56,32 @@ impl Race {
             (Some(a), Some(b)) => (a..b + 1).len(),
         }
     }
+
+    fn parse_part2(contents: &str) -> Self {
+        let mut line = contents.lines();
+        let time: String = line
+            .next()
+            .unwrap()
+            .split(':')
+            .last()
+            .unwrap()
+            .chars()
+            .filter(|c| !c.is_whitespace())
+            .collect();
+        let distance: String = line
+            .next()
+            .unwrap()
+            .split(':')
+            .last()
+            .unwrap()
+            .chars()
+            .filter(|c| !c.is_whitespace())
+            .collect();
+        Race {
+            time: time.parse().unwrap(),
+            best_distance: distance.parse().unwrap(),
+        }
+    }
 }
 
 impl Competition {
@@ -72,11 +98,12 @@ impl Competition {
             distances.push(d[1].parse().unwrap());
         }
         for (t, d) in times.iter().zip(distances.iter()) {
-            races.push(Race{time: *t, best_distance: *d})
+            races.push(Race {
+                time: *t,
+                best_distance: *d,
+            })
         }
-        Competition {
-            races,
-        }
+        Competition { races }
     }
 }
 
@@ -85,6 +112,10 @@ fn part1(contents: &str) -> usize {
     competition.races.iter().map(|r| r.nb_wins()).product()
 }
 
+fn part2(contents: &str) -> usize {
+    let race = Race::parse_part2(contents);
+    race.nb_wins()
+}
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
@@ -93,7 +124,9 @@ fn main() -> color_eyre::Result<()> {
     println!("Input file: {file_path}");
     let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
     let value_part1 = part1(&contents);
-    println!("Almanac part1: {}", value_part1);
+    println!("Part1: {}", value_part1);
+    let value_part2 = part2(&contents);
+    println!("Part2: {}", value_part2);
     Ok(())
 }
 
@@ -156,6 +189,15 @@ mod tests {
     }
 
     #[test]
+    fn test_race_parse_part2() {
+        let contents = r"Time:      7  15   30
+Distance:  9  40  200";
+        let race = Race::parse_part2(contents);
+        assert_eq!(race.time, 71530);
+        assert_eq!(race.best_distance, 940200);
+    }
+
+    #[test]
     fn test_competition_parse() {
         let contents = r"Time:      7  15   30
 Distance:  9  40  200";
@@ -190,4 +232,12 @@ Distance:  9  40  200";
 Distance:  9  40  200";
         assert_eq!(part1(contents), 288)
     }
+
+    #[test]
+    fn test_part2() {
+        let contents = r"Time:      7  15   30
+Distance:  9  40  200";
+        assert_eq!(part2(contents), 71503)
+    }
+
 }
