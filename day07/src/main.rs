@@ -2,7 +2,6 @@ use std::{error::Error, str::FromStr, collections::HashMap, cmp::Ordering, env, 
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Hash)]
 enum Card {
-    One,
     Two,
     Three,
     Four,
@@ -36,33 +35,12 @@ struct Hand {
 }
 
 
-impl Card {
-    fn index(self) -> u32 {
-        match self {
-            Card::One => 0,
-            Card::Two => 1,
-            Card::Three => 2,
-            Card::Four => 3,
-            Card::Five => 4, 
-            Card::Six => 5,
-            Card::Seven => 6,
-            Card::Eight => 7,
-            Card::Nine => 8,
-            Card::Ten => 9,
-            Card::Jack => 10,
-            Card::Queen => 11,
-            Card::King => 12,
-            Card::Ace => 13,
-        }
-    }
-}
 
 impl FromStr for Card {
     type Err = Box<dyn Error>;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "1" => Ok(Card::One),
             "2" => Ok(Card::Two),
             "3" => Ok(Card::Three),
             "4" => Ok(Card::Four),
@@ -84,7 +62,6 @@ impl FromStr for Card {
 impl ToString for Card {
     fn to_string(&self) -> String {
         match self {
-            Card::One => "1".to_string(),
             Card::Two => "2".to_string(),
             Card::Three => "3".to_string(),
             Card::Four => "4".to_string(),
@@ -106,7 +83,7 @@ impl FromStr for Hand {
     type Err = Box<dyn Error>;
 
     fn from_str(line: &str) -> Result<Self, Self::Err> {
-        let mut cards: [Card; 5] = [Card::One; 5];
+        let mut cards: [Card; 5] = [Card::Two; 5];
         let mut splitted = line.split(' ');
         let it = splitted.next();
         for (i, c) in it.unwrap().chars().enumerate() {
@@ -196,7 +173,7 @@ mod tests {
 
     #[test]
     fn test_card_order() {
-        assert!(Card::One < Card::Two);
+        assert!(Card::Three < Card::Four);
         assert!(Card::Ace > Card::Queen);
     }
 
@@ -211,10 +188,10 @@ mod tests {
     fn test_hand_parsing() {
         assert_eq!(
             Hand {
-                cards: [Card::One, Card::Ten, Card::Jack, Card::Queen, Card::Ace],
+                cards: [Card::Two, Card::Ten, Card::Jack, Card::Queen, Card::Ace],
                 bid: 324
             },
-            Hand::from_str("1TJQA 324").unwrap()
+            Hand::from_str("2TJQA 324").unwrap()
         );
     }
 
