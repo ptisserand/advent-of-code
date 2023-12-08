@@ -1,7 +1,8 @@
-use std::{error::Error, str::FromStr, collections::HashMap, cmp::Ordering, env, fs};
+use std::{cmp::Ordering, collections::HashMap, env, error::Error, fs, str::FromStr};
 
-#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Hash)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Hash, Default)]
 enum Card {
+    #[default]
     Two,
     Three,
     Four,
@@ -12,6 +13,24 @@ enum Card {
     Nine,
     Ten,
     Jack,
+    Queen,
+    King,
+    Ace,
+}
+
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Hash, Default)]
+enum Card2 {
+    Jocker,
+    #[default]
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    Ten,
     Queen,
     King,
     Ace,
@@ -29,12 +48,13 @@ enum HandType {
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Ord)]
-struct Hand {
-    cards: [Card; 5],
+struct Hand<T: std::hash::Hash + Copy + PartialOrd>
+where
+    Hand<T>: HandTrait,
+{
+    cards: [T; 5],
     bid: u32,
 }
-
-
 
 impl FromStr for Card {
     type Err = Box<dyn Error>;
@@ -79,22 +99,74 @@ impl ToString for Card {
     }
 }
 
-impl FromStr for Hand {
+impl FromStr for Card2 {
+    type Err = Box<dyn Error>;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "J" => Ok(Card2::Jocker),
+            "2" => Ok(Card2::Two),
+            "3" => Ok(Card2::Three),
+            "4" => Ok(Card2::Four),
+            "5" => Ok(Card2::Five),
+            "6" => Ok(Card2::Six),
+            "7" => Ok(Card2::Seven),
+            "8" => Ok(Card2::Eight),
+            "9" => Ok(Card2::Nine),
+            "T" => Ok(Card2::Ten),
+            "Q" => Ok(Card2::Queen),
+            "K" => Ok(Card2::King),
+            "A" => Ok(Card2::Ace),
+            _ => Err(format!("'{}' is not a card", s).into()),
+        }
+    }
+}
+
+impl ToString for Card2 {
+    fn to_string(&self) -> String {
+        match self {
+            Card2::Jocker => "J".to_string(),
+            Card2::Two => "2".to_string(),
+            Card2::Three => "3".to_string(),
+            Card2::Four => "4".to_string(),
+            Card2::Five => "5".to_string(),
+            Card2::Six => "6".to_string(),
+            Card2::Seven => "7".to_string(),
+            Card2::Eight => "8".to_string(),
+            Card2::Nine => "9".to_string(),
+            Card2::Ten => "T".to_string(),
+            Card2::Queen => "Q".to_string(),
+            Card2::King => "K".to_string(),
+            Card2::Ace => "A".to_string(),
+        }
+    }
+}
+
+impl<T> FromStr for Hand<T>
+where
+    T: FromStr + std::fmt::Debug + std::hash::Hash + Copy + Default + PartialOrd,
+    <T as FromStr>::Err: std::fmt::Debug,
+    Hand<T>: HandTrait,
+{
     type Err = Box<dyn Error>;
 
     fn from_str(line: &str) -> Result<Self, Self::Err> {
-        let mut cards: [Card; 5] = [Card::Two; 5];
+        let mut cards: [T; 5] = [T::default(); 5];
         let mut splitted = line.split(' ');
         let it = splitted.next();
         for (i, c) in it.unwrap().chars().enumerate() {
-            cards[i] = Card::from_str(c.to_string().as_str()).unwrap();
+            cards[i] = T::from_str(c.to_string().as_str()).unwrap();
         }
         let bid = splitted.next().unwrap().parse().unwrap();
         Ok(Self { cards, bid })
     }
 }
 
-impl PartialOrd for Hand {
+impl<T> PartialOrd for Hand<T>
+where
+    T: PartialOrd + Eq + std::hash::Hash + Copy,
+    Hand<T>: HandTrait,
+{
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         let a = self.result();
         let b = other.result();
@@ -111,8 +183,11 @@ impl PartialOrd for Hand {
     }
 }
 
+trait HandTrait {
+    fn result(&self) -> HandType;
+}
 
-impl Hand {
+impl HandTrait for Hand<Card> {
     fn result(&self) -> HandType {
         let mut m: HashMap<Card, usize> = HashMap::new();
         for c in self.cards {
@@ -136,9 +211,75 @@ impl Hand {
     }
 }
 
+impl HandTrait for Hand<Card2> {
+    fn result(&self) -> HandType {
+        let mut m: HashMap<Card2, usize> = HashMap::new();
+        for c in self.cards {
+            *m.entry(c).or_default() += 1;
+        }
+        if m.contains_key(&Card2::Jocker) {
+            let nb_jocker = *m.get(&Card2::Jocker).unwrap();
+            if nb_jocker == 5 {
+                return HandType::FiveOfAKind;
+            }
+            let mut m_vec: Vec<_> = m.iter().filter(|a| *a.0 != Card2::Jocker).collect();
+            m_vec.sort_by(|a, b| a.1.cmp(b.1).reverse());
+            match m_vec[0] {
+                (_, 4) => HandType::FiveOfAKind,
+                (_, 3) => {
+                    if nb_jocker > 1 {
+                        HandType::FiveOfAKind
+                    } else {
+                        HandType::FourOfAKind
+                    }
+                }
+                (_, 2) => {
+                    if m_vec.len() > 1 && *m_vec[1].1 == 2 {
+                        HandType::FullHouse
+                    } else {
+                        match nb_jocker {
+                            1 => HandType::ThreeOfAkind,
+                            2 => HandType::FourOfAKind,
+                            _ => HandType::FiveOfAKind,
+                        }
+                    }
+                }
+                (_, 1) => match nb_jocker {
+                    1 => HandType::OnePair,
+                    2 => HandType::ThreeOfAkind,
+                    3 => HandType::FourOfAKind,
+                    _ => HandType::FiveOfAKind,
+                },
+                (_, _) => match nb_jocker {
+                    1 => HandType::OnePair,
+                    2 => HandType::ThreeOfAkind,
+                    3 => HandType::FourOfAKind,
+                    _ => HandType::FiveOfAKind,
+                },
+            }
+        } else {
+            let mut m_vec: Vec<_> = m.iter().collect();
+            m_vec.sort_by(|a, b| a.1.cmp(b.1).reverse());
+            match m_vec[0] {
+                (_, 5) => HandType::FiveOfAKind,
+                (_, 4) => HandType::FourOfAKind,
+                (_, 3) => match m_vec[1] {
+                    (_, 2) => HandType::FullHouse,
+                    (_, _) => HandType::ThreeOfAkind,
+                },
+                (_, 2) => match m_vec[1] {
+                    (_, 2) => HandType::TwoPair,
+                    (_, _) => HandType::OnePair,
+                },
+                (_, _) => HandType::HighCard,
+            }
+        }
+    }
+}
+
 fn part1(contents: &str) -> u32 {
     let mut result = 0;
-    let mut hands: Vec<Hand> = Vec::new();
+    let mut hands: Vec<Hand<Card>> = Vec::new();
     for line in contents.lines() {
         hands.push(Hand::from_str(line).unwrap());
     }
@@ -150,7 +291,17 @@ fn part1(contents: &str) -> u32 {
 }
 
 fn part2(contents: &str) -> u32 {
-    0
+    let mut result = 0;
+    let mut hands: Vec<Hand<Card2>> = Vec::new();
+    for line in contents.lines() {
+        hands.push(Hand::from_str(line).unwrap());
+    }
+    hands.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    // println!("{:#?}", hands);
+    for (i, h) in hands.iter().enumerate() {
+        result += h.bid * (i + 1) as u32;
+    }
+    result
 }
 
 fn main() -> color_eyre::Result<()> {
@@ -165,7 +316,6 @@ fn main() -> color_eyre::Result<()> {
     println!("Part2: {}", value_part2);
     Ok(())
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -196,37 +346,79 @@ mod tests {
     }
 
     #[test]
-    fn test_hand_type() {
+    fn test_hand_result() {
         assert_eq!(
-            Hand::from_str("32T3K 765").unwrap().result(),
+            Hand::<Card>::from_str("32T3K 765").unwrap().result(),
             HandType::OnePair
         );
         assert_eq!(
-            Hand::from_str("T55J5 684").unwrap().result(),
+            Hand::<Card>::from_str("T55J5 684").unwrap().result(),
             HandType::ThreeOfAkind
         );
         assert_eq!(
-            Hand::from_str("KK677 28").unwrap().result(),
+            Hand::<Card>::from_str("KK677 28").unwrap().result(),
             HandType::TwoPair
         );
         assert_eq!(
-            Hand::from_str("KTJJT 220").unwrap().result(),
+            Hand::<Card>::from_str("KTJJT 220").unwrap().result(),
             HandType::TwoPair
         );
         assert_eq!(
-            Hand::from_str("QQQJA 483").unwrap().result(),
+            Hand::<Card>::from_str("QQQJA 483").unwrap().result(),
             HandType::ThreeOfAkind
         );
     }
 
     #[test]
+    fn test_hand_result_part2() {
+        assert_eq!(
+            Hand::<Card2>::from_str("32T3K 765").unwrap().result(),
+            HandType::OnePair
+        );
+        assert_eq!(
+            Hand::<Card2>::from_str("T55J5 684").unwrap().result(),
+            HandType::FourOfAKind
+        );
+        assert_eq!(
+            Hand::<Card2>::from_str("KK677 28").unwrap().result(),
+            HandType::TwoPair
+        );
+        assert_eq!(
+            Hand::<Card2>::from_str("KTJJT 220").unwrap().result(),
+            HandType::FourOfAKind
+        );
+        assert_eq!(
+            Hand::<Card2>::from_str("QQQJA 483").unwrap().result(),
+            HandType::FourOfAKind
+        );
+        assert_eq!(
+            Hand::<Card2>::from_str("JJJJJ 483").unwrap().result(),
+            HandType::FiveOfAKind
+        );
+        assert_eq!(
+            Hand::<Card2>::from_str("KKJQQ 483").unwrap().result(),
+            HandType::FullHouse
+        );
+    }
+
+    #[test]
     fn test_hand_compare() {
-        let a = Hand::from_str("KK677 28").unwrap();
-        let b = Hand::from_str("KTJJT 220").unwrap();
+        let a = Hand::<Card>::from_str("KK677 28").unwrap();
+        let b = Hand::<Card>::from_str("KTJJT 220").unwrap();
         assert!(a > b);
-        let a = Hand::from_str("32T3K 765").unwrap();
-        let b = Hand::from_str("T55J5 684").unwrap();
+        let a = Hand::<Card>::from_str("32T3K 765").unwrap();
+        let b = Hand::<Card>::from_str("T55J5 684").unwrap();
         assert!(a < b);
+    }
+
+    #[test]
+    fn test_hand_compare_part2() {
+        let a = Hand::<Card2>::from_str("KK677 28").unwrap();
+        let b = Hand::<Card2>::from_str("KTJJT 220").unwrap();
+        assert!(a < b);
+        let a = Hand::<Card2>::from_str("KTJJT 220").unwrap();
+        let b = Hand::<Card2>::from_str("T55J5 684").unwrap();
+        assert!(a > b);
     }
 
     #[test]
@@ -237,5 +429,15 @@ KK677 28
 KTJJT 220
 QQQJA 483";
         assert_eq!(part1(contents), 6440);
+    }
+
+    #[test]
+    fn test_part2() {
+        let contents = r"32T3K 765
+T55J5 684
+KK677 28
+KTJJT 220
+QQQJA 483";
+        assert_eq!(part2(contents), 5905);
     }
 }
